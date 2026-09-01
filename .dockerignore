@@ -1,0 +1,10 @@
+# The vendored Python reference implementation is not part of the build.
+pytesira/
+
+.git/
+.github/
+*.md
+!README.md
+config.yaml
+Dockerfile
+.dockerignore
