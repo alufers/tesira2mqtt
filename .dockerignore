@@ -1,6 +1,3 @@
-# The vendored Python reference implementation is not part of the build.
-pytesira/
-
 .git/
 .github/
 *.md
@@ -8,3 +5,4 @@ pytesira/
 config.yaml
 Dockerfile
 .dockerignore
+tesira2mqtt.yaml
