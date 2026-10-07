@@ -5,6 +5,18 @@ A bridge between [Biamp Tesira](https://www.biamp.com/products/families/tesira) 
 
 For each (supported) audio block multiple MQTT topics are published and subscribed to, allowing for changing and reading it's parameters.
 
+### Room Combiner walls
+
+Room Combiner blocks are detected automatically. For a block named `Combiner`, wall state is published as a retained boolean on `tesira2mqtt/Combiner/wall/<wall-number>` and can be changed by publishing `true` or `false` to `tesira2mqtt/Combiner/wall/<wall-number>/set`.
+
+The values map directly to Tesira's `wallState` attribute: `true` means the wall is closed (the rooms are separated), while `false` means it is open (the rooms are combined). The block also publishes `tesira2mqtt/Combiner/num_walls`.
+
+Each room publishes its group number and source assignment as retained integer values:
+
+- `tesira2mqtt/Combiner/room/<room-number>/group` (`/set` sets the Tesira `group` attribute)
+- `tesira2mqtt/Combiner/room/<room-number>/source` (`/set` sets the Tesira `sourceSelection` attribute)
+- `tesira2mqtt/Combiner/num_rooms`
+
 ## Prerequisites
 
 The Tesira device must have it's **Control** Ethernet port connected to the network where this bridge will run, have a static IP or hostname and have SSH enabled.
