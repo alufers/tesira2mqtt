@@ -164,7 +164,7 @@ func (c *TTPClient) runReadLoop() error {
 	return nil
 }
 
-var BlockTypeRegex = regexp.MustCompile(`\'BLOCKTYPE\' is not supported by ([A-Za-z0-9_]+)\:\:Attributes`)
+var BlockTypeRegex = regexp.MustCompile(`\'BLOCKTYPE\' is not supported by ([A-Za-z0-9_]+)\:\:(?:Text)?Attributes`)
 
 func (c *TTPClient) discoverBlocks() {
 
@@ -207,6 +207,10 @@ func (c *TTPClient) discoverBlocks() {
 
 		case "LevelControlInterface":
 			b = &LevelControlBlock{Name: blockNameStr}
+		case "RoomCombinerInterface":
+			b = &RoomCombinerBlock{Name: blockNameStr}
+		case "LogicStateInterface":
+			b = &LogicStateBlock{Name: blockNameStr}
 		}
 		if b != nil {
 			c.Blocks[blockNameStr] = b
