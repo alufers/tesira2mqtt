@@ -209,6 +209,8 @@ func (c *TTPClient) discoverBlocks() {
 			b = &LevelControlBlock{Name: blockNameStr}
 		case "RoomCombinerInterface":
 			b = &RoomCombinerBlock{Name: blockNameStr}
+		case "LogicStateInterface":
+			b = &LogicStateBlock{Name: blockNameStr}
 		}
 		if b != nil {
 			c.Blocks[blockNameStr] = b

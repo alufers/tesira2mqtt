@@ -17,6 +17,10 @@ Each room publishes its group number and source assignment as retained integer v
 - `tesira2mqtt/Combiner/room/<room-number>/source` (`/set` sets the Tesira `sourceSelection` attribute)
 - `tesira2mqtt/Combiner/num_rooms`
 
+### Logic State
+
+Logic State blocks are detected automatically. For a block named `Logic`, each channel is published as a retained boolean on `tesira2mqtt/Logic/state/<channel-number>`. Publish `true` or `false` to `tesira2mqtt/Logic/state/<channel-number>/set` to change the state. The block also publishes `tesira2mqtt/Logic/num_channels`.
+
 ## Prerequisites
 
 The Tesira device must have it's **Control** Ethernet port connected to the network where this bridge will run, have a static IP or hostname and have SSH enabled.
