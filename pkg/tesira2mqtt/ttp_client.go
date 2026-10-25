@@ -66,7 +66,6 @@ func (c *TTPClient) run() {
 	if token := c.mqttClient.Connect(); token.Wait() && token.Error() != nil {
 		log.Fatalf("Failed to connect to MQTT broker: %v", token.Error())
 	}
-	c.mqttClient.Subscribe(fmt.Sprintf("%v#", config.MQTT.Prefix), 0, c.onMqttMessage)
 	for {
 		err := c.connect()
 		if err != nil {
@@ -105,6 +104,7 @@ func (c *TTPClient) onMqttConnectionNotification(client mqtt.Client, notificatio
 	switch n := notification.(type) {
 	case mqtt.ConnectionNotificationConnected:
 		log.Printf("Connected to MQTT broker")
+		c.mqttClient.Subscribe(fmt.Sprintf("%v#", config.MQTT.Prefix), 0, c.onMqttMessage)
 		c.publishAllBlockStates()
 	case mqtt.ConnectionNotificationLost:
 		log.Printf("Disconnected from MQTT broker: %v", n.Reason)
@@ -140,7 +140,7 @@ func (c *TTPClient) runReadLoop() error {
 		case *TTPResponse:
 			c.responses <- v
 		case *TTPError:
-
+			log.Printf("Received TTP error: %+v", v)
 			c.errors <- v
 		case *TTPSubscriptionData:
 			log.Printf("Received TTP subscription data: %+v", v)
