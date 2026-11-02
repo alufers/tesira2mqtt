@@ -86,6 +86,30 @@ func (b *LevelControlBlock) RunTTPDiscovery(c *TTPClient, blockName string) erro
 	return nil
 }
 
+func (b *LevelControlBlock) RefreshState(c *TTPClient) error {
+	levelsResp, err := c.RunCommand(fmt.Sprintf("%v get levels", b.Name))
+	if err != nil {
+		return fmt.Errorf("failed to get levels for block %v: %v", b.Name, err)
+	}
+	levels, ok := toFloat64Slice(levelsResp.Value.(map[string]any)["value"])
+	if !ok || len(levels) != len(b.Levels) {
+		return fmt.Errorf("invalid levels for block %v", b.Name)
+	}
+
+	mutesResp, err := c.RunCommand(fmt.Sprintf("%v get mutes", b.Name))
+	if err != nil {
+		return fmt.Errorf("failed to get mutes for block %v: %v", b.Name, err)
+	}
+	mutes, ok := toBoolSlice(mutesResp.Value.(map[string]any)["value"])
+	if !ok || len(mutes) != len(b.Mutes) {
+		return fmt.Errorf("invalid mutes for block %v", b.Name)
+	}
+
+	b.Levels = levels
+	b.Mutes = mutes
+	return nil
+}
+
 func (b *LevelControlBlock) HandleTTPSubscriptionData(c *TTPClient, data *TTPSubscriptionData) (bool, error) {
 	if data.PublishToken == fmt.Sprintf("T2M_%v_LEVELS", b.Name) {
 		levels, ok := toFloat64Slice(data.Data)

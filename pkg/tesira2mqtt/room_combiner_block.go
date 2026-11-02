@@ -91,6 +91,50 @@ func (b *RoomCombinerBlock) RunTTPDiscovery(c *TTPClient, blockName string) erro
 	return nil
 }
 
+func (b *RoomCombinerBlock) RefreshState(c *TTPClient) error {
+	walls := make([]bool, len(b.Walls))
+	for i := range walls {
+		resp, err := c.RunCommand(fmt.Sprintf("%v get wallState %d", b.Name, i+1))
+		if err != nil {
+			return fmt.Errorf("failed to get wallState for block %v, wall %d: %v", b.Name, i+1, err)
+		}
+		state, ok := responseBoolValue(resp)
+		if !ok {
+			return fmt.Errorf("failed to convert wallState to bool for block %v, wall %d", b.Name, i+1)
+		}
+		walls[i] = state
+	}
+
+	groups := make([]int64, len(b.Groups))
+	sources := make([]int64, len(b.SourceSelections))
+	for i := range groups {
+		resp, err := c.RunCommand(fmt.Sprintf("%v get group %d", b.Name, i+1))
+		if err != nil {
+			return fmt.Errorf("failed to get group for block %v, room %d: %v", b.Name, i+1, err)
+		}
+		group, ok := responseIntValue(resp)
+		if !ok {
+			return fmt.Errorf("failed to convert group to integer for block %v, room %d", b.Name, i+1)
+		}
+		groups[i] = group
+
+		resp, err = c.RunCommand(fmt.Sprintf("%v get sourceSelection %d", b.Name, i+1))
+		if err != nil {
+			return fmt.Errorf("failed to get sourceSelection for block %v, room %d: %v", b.Name, i+1, err)
+		}
+		source, ok := responseIntValue(resp)
+		if !ok {
+			return fmt.Errorf("failed to convert sourceSelection to integer for block %v, room %d", b.Name, i+1)
+		}
+		sources[i] = source
+	}
+
+	copy(b.Walls, walls)
+	copy(b.Groups, groups)
+	copy(b.SourceSelections, sources)
+	return nil
+}
+
 func (b *RoomCombinerBlock) HandleTTPSubscriptionData(_ *TTPClient, data *TTPSubscriptionData) (bool, error) {
 	for wall := range b.Walls {
 		if data.PublishToken != fmt.Sprintf("T2M_%v_WALL_%d", b.Name, wall+1) {

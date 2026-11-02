@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -81,9 +82,41 @@ func (c *TTPClient) run() {
 
 		go c.discoverBlocks()
 		c.connErrCount = 0
+		stopResync := make(chan struct{})
+		go c.runPeriodicResync(stopResync)
 		err = c.runReadLoop()
+		close(stopResync)
 		if err != nil {
 			log.Printf("Error in TTP read loop: %v", err)
+		}
+	}
+}
+
+func (c *TTPClient) runPeriodicResync(stop <-chan struct{}) {
+	ticker := time.NewTicker(StateResyncInterval)
+	log.Printf("ticker start")
+	defer ticker.Stop()
+	for {
+		select {
+		case <-stop:
+			return
+		case <-ticker.C:
+			log.Printf("tick")
+			c.resyncBlocks()
+		}
+	}
+}
+
+// resyncBlocks re-reads the state of all tracked blocks to recover from desyncs.
+func (c *TTPClient) resyncBlocks() {
+	log.Printf("Resyncing state of all blocks")
+	for name, block := range c.Blocks {
+		if err := block.RefreshState(c); err != nil {
+			log.Printf("Error refreshing state for block %v: %v", name, err)
+			continue
+		}
+		if err := block.PublishStateToMQTT(c); err != nil {
+			log.Printf("Error publishing state for block %v: %v", name, err)
 		}
 	}
 }
@@ -140,7 +173,9 @@ func (c *TTPClient) runReadLoop() error {
 		case *TTPResponse:
 			c.responses <- v
 		case *TTPError:
-			log.Printf("Received TTP error: %+v", v)
+			if !strings.Contains(v.Message, "'BLOCKTYPE' is not supported by") {
+				log.Printf("Received TTP error: %+v", v)
+			}
 			c.errors <- v
 		case *TTPSubscriptionData:
 			log.Printf("Received TTP subscription data: %+v", v)

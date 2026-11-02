@@ -44,6 +44,23 @@ func (b *LogicStateBlock) RunTTPDiscovery(c *TTPClient, blockName string) error 
 	return nil
 }
 
+func (b *LogicStateBlock) RefreshState(c *TTPClient) error {
+	states := make([]bool, len(b.States))
+	for channel := range states {
+		resp, err := c.RunCommand(fmt.Sprintf("%v get state %d", b.Name, channel+1))
+		if err != nil {
+			return fmt.Errorf("failed to get state for block %v, channel %d: %v", b.Name, channel+1, err)
+		}
+		state, ok := responseBoolValue(resp)
+		if !ok {
+			return fmt.Errorf("failed to convert state to bool for block %v, channel %d", b.Name, channel+1)
+		}
+		states[channel] = state
+	}
+	copy(b.States, states)
+	return nil
+}
+
 func (b *LogicStateBlock) HandleTTPSubscriptionData(_ *TTPClient, data *TTPSubscriptionData) (bool, error) {
 	for channel := range b.States {
 		if data.PublishToken != fmt.Sprintf("T2M_%v_STATE_%d", b.Name, channel+1) {
